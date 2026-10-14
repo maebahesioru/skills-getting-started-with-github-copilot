@@ -38,6 +38,42 @@ activities = {
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
         "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+    },
+    "Soccer Club": {
+        "description": "Practice soccer skills and play matches against other schools",
+        "schedule": "Tuesdays and Thursdays, 4:00 PM - 5:30 PM",
+        "max_participants": 22,
+        "participants": []
+    },
+    "Swimming Club": {
+        "description": "Swim training and endurance sessions in the school pool",
+        "schedule": "Mondays and Wednesdays, 5:00 PM - 6:30 PM",
+        "max_participants": 18,
+        "participants": []
+    },
+    "Drama Club": {
+        "description": "Rehearse and perform plays, develop acting and stagecraft skills",
+        "schedule": "Wednesdays and Saturdays, 4:00 PM - 6:00 PM",
+        "max_participants": 16,
+        "participants": []
+    },
+    "Photography Club": {
+        "description": "Explore photography techniques and organize exhibitions",
+        "schedule": "Fridays, 4:00 PM - 5:30 PM",
+        "max_participants": 12,
+        "participants": []
+    },
+    "Debate Team": {
+        "description": "Prepare for debate tournaments and improve public speaking",
+        "schedule": "Mondays and Thursdays, 4:30 PM - 6:00 PM",
+        "max_participants": 16,
+        "participants": []
+    },
+    "Science Club": {
+        "description": "Conduct experiments, discuss scientific topics, and enter fairs",
+        "schedule": "Tuesdays, 3:45 PM - 5:15 PM",
+        "max_participants": 20,
+        "participants": []
     }
 }
 
@@ -61,7 +97,39 @@ def signup_for_activity(activity_name: str, email: str):
 
     # Get the specific activity
     activity = activities[activity_name]
+    participants = activity.get("participants", [])
+    max_participants = activity.get("max_participants", 0)
+
+    # Reject duplicate signups
+    if email in participants:
+        raise HTTPException(status_code=400, detail=f"Email {email} is already signed up for {activity_name}")
+
+    # Reject if activity is full
+    if len(participants) >= max_participants:
+        raise HTTPException(status_code=400, detail=f"Activity {activity_name} is full")
 
     # Add student
-    activity["participants"].append(email)
+    participants.append(email)
+    activity["participants"] = participants
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.delete("/activities/{activity_name}/participants/{email}")
+def unregister_from_activity(activity_name: str, email: str):
+    """Unregister a student from an activity"""
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Get the specific activity
+    activity = activities[activity_name]
+    participants = activity.get("participants", [])
+
+    # Validate participant exists
+    if email not in participants:
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    # Remove student
+    participants.remove(email)
+    activity["participants"] = participants
+    return {"message": f"Unregistered {email} from {activity_name}"}
